@@ -5,7 +5,8 @@ WORKDIR /app
 # 캐시 최적화: 의존성 먼저 받아서 레이어 캐시 활용
 COPY gradlew ./
 COPY gradle ./gradle
-COPY build.gradle.kts settings.gradle.kts ./
+COPY build.gradle* ./
+COPY settings.gradle* ./
 RUN chmod +x ./gradlew
 # 의존성만 우선 받아 캐시(프로젝트에 따라 실패할 수 있어도 캐시가치가 커서 OK)
 RUN ./gradlew --no-daemon build -x test || true
