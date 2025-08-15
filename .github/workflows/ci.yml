@@ -75,7 +75,7 @@ jobs:
         run: ./gradlew build -x test
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jar-artifact
           path: build/libs/*.jar
@@ -94,7 +94,7 @@ jobs:
   #       uses: actions/checkout@v4
   #
   #     - name: Download build artifacts
-  #       uses: actions/download-artifact@v3
+  #       uses: actions/download-artifact@v4
   #       with:
   #         name: jar-artifact
   #         path: build/libs/
@@ -108,6 +108,6 @@ jobs:
   #
   #     - name: Test Docker image
   #       run: |
-  #         docker run --rm -d --name test-container -p /*포트번호*/ zabang-be:latest
+  #         docker run --rm -d --name test-container -p 8080 zabang-be:latest
   #         sleep 10
   #         docker stop test-container
