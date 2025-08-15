@@ -1,105 +1,113 @@
-name: Continuous Integration
+name: CI
 
 on:
   push:
-    branches: ["main"]
-    paths-ignore:
-      - 'xinfra/eks/**'
-
-permissions:
-      id-token: write
-      contents: read
-      
-env:
-  REPOSITORY: ${{ secrets.REPOSITORY }}
-  IMAGE_TAG: :${{ github.ref_name }}-${{ github.sha }}
-  REGISTRY_USERNAME: ${{ github.actor }}
-  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-  AWS_ROLE: ${{ secrets.AWS_ROLE }}
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
 
 jobs:
-  Build:
-    name: Build & Delivery
+  test:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          token: ${{secrets.TOKEN_GITHUB}}
-          submodules: true
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Git Submodule Update
-        run: |
-          git submodule update --remote --recursive
-      
-      - name: Set up Java JDK
-        uses: actions/setup-java@v3
+      - name: Set up JDK 23
+        uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: 17
-        
+          java-version: "17"
+          distribution: "temurin"
+
       - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-        shell: bash
-        
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        
-      - name: Build with Gradle
-        id: buildWithGradle
-        run: ./gradlew clean build -x test
-        shell: bash
+        run: chmod +x gradlew
 
-
-      - name: lowercase the image tag & repository
-        run: |
-          echo "REPOSITORY=$(echo $REPOSITORY | tr '[:upper:]' '[:lower:]')" >> ${GITHUB_ENV}
-          echo "IMAGE_TAG=$(echo $IMAGE_TAG | tr '[:upper:]' '[:lower:]')" >> ${GITHUB_ENV}
-
-      - name: Set Spring Image Environment Variable
-        run: |
-          echo "PROD_IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.REPOSITORY }}${{ env.IMAGE_TAG }}-prod" >> ${GITHUB_ENV}
-          echo "DEV_IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.REPOSITORY }}${{ env.IMAGE_TAG }}-dev" >> ${GITHUB_ENV}
-          echo "EU_IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.REPOSITORY }}${{ env.IMAGE_TAG }}-eu" >> ${GITHUB_ENV}
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
         with:
-          aws-region: ${{env.AWS_REGION}}
-          role-to-assume: ${{ env.AWS_ROLE }}
-          role-session-name: GitHubActionsSession
-    
-      - name: Login to AWS ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
- 
-      - name: Build Prod Image
-        run: docker build --no-cache -t ${{ env.PROD_IMAGE }} -f ./xinfra/docker/DockerfileProd .
+      - name: Run tests
+        run: ./gradlew test
 
-      - name: Build Dev Image
-        run: docker build --no-cache -t ${{ env.DEV_IMAGE }} -f ./xinfra/docker/DockerfileDev .
+      - name: Generate test report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: Gradle Tests
+          path: build/test-results/test/*.xml
+          reporter: java-junit
 
-      - name: Build EU Image
-        run: docker build --no-cache -t ${{ env.EU_IMAGE }} -f ./xinfra/docker/DockerfileEu .
+  build:
+    runs-on: ubuntu-latest
+    needs: test
 
-      - name: Push to ECR
-        run: |
-          docker push ${{ env.PROD_IMAGE }}
-          docker push ${{ env.DEV_IMAGE }}
-          docker push ${{ env.EU_IMAGE }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Update Kustomize with new images
-        run: |
-          sed -i "s|image:.*-prod:latest|image: ${{ env.PROD_IMAGE }}|g; s|image:.*-prod|image: ${{ env.PROD_IMAGE }}|g" ./xinfra/eks/overlays/prod/patch.yaml
-          sed -i "s|image:.*-dev:latest|image: ${{ env.DEV_IMAGE }}|g; s|image:.*-dev|image: ${{ env.DEV_IMAGE }}|g" ./xinfra/eks/overlays/dev/patch.yaml
-    
+      - name: Set up JDK 23
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
 
-      - name: Commit and Push Changes
-        run: |
-          git config --local user.email "github-actions@github.com"
-          git config --local user.name "GitHub Actions"
-          git add ./xinfra/eks/overlays/prod/patch.yaml ./xinfra/eks/overlays/dev/patch.yaml
-          git commit -m "Update kustomization files with new image tags"
-          git push origin ${{ github.ref }}
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build with Gradle
+        run: ./gradlew build -x test
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jar-artifact
+          path: build/libs/*.jar
+
+  # --------------------------------------------------------------------
+  # docker-build:
+  #   ▶ 서버/레지스트리/포트 등 배포 환경이 준비되면 주석 해제
+  #
+  # docker-build:
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   if: github.ref == 'refs/heads/main'
+  #
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Download build artifacts
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: jar-artifact
+  #         path: build/libs/
+  #
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
+  #
+  #     - name: Build Docker image
+  #       run: |
+  #         docker buildx build --platform linux/amd64,linux/arm64 -t zabang-be:latest . --load
+  #
+  #     - name: Test Docker image
+  #       run: |
+  #         docker run --rm -d --name test-container -p /*포트번호*/ zabang-be:latest
+  #         sleep 10
+  #         docker stop test-container
