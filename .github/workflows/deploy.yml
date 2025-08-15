@@ -54,6 +54,7 @@ jobs:
           docker buildx build --platform linux/amd64 -t zabang-be:latest . --load
           docker save zabang-be:latest | gzip > zabang-be.tar.gz
 
+      # ---- 서버 관련 단계: 서버 준비될 때까지 전체 주석 ----
       # - name: Copy files to server
       #   if: steps.has_dockerfile.outputs.present == 'true'
       #   uses: appleboy/scp-action@v0.1.7
@@ -90,27 +91,17 @@ jobs:
       #     script: |
       #       set -e
       #       cd /home/${{ secrets.SERVER_USER }}/zabang
-
       #       echo "Server arch: $(uname -m)"
-
-            # 압축해제 후 이미지 로드
-            gunzip -c zabang-be.tar.gz | docker load
-
-            # 기존 컨테이너 정리
-            docker compose down --timeout 30 || true
-
-            # 새 컨테이너 시작 (compose에 image: zabang-be:latest 명시되어 있어야 함)
-            docker compose up -d
-
-            # 헬스체크 (예: 7100 포트로 /actuator/health)
-            echo "Waiting for application to start..."
-            for i in {1..30}; do
-              if curl -fsS http://localhost:7100/actuator/health >/dev/null 2>&1; then
-                echo "Application is healthy!"
-                break
-              fi
-              sleep 5
-            done
-
-            docker compose ps
-            docker compose logs --tail=50
+      #       # gunzip -c zabang-be.tar.gz | docker load
+      #       # docker compose down --timeout 30 || true
+      #       # docker compose up -d
+      #       # echo "Waiting for application to start..."
+      #       # for i in {1..30}; do
+      #       #   if curl -fsS http://localhost:7100/actuator/health >/dev/null 2>&1; then
+      #       #     echo "Application is healthy!"
+      #       #     break
+      #       #   fi
+      #       #   sleep 5
+      #       # done
+      #       # docker compose ps
+      #       # docker compose logs --tail=50
