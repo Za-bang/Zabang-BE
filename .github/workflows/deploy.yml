@@ -52,7 +52,7 @@ jobs:
         if: steps.has_dockerfile.outputs.present == 'true'
         run: |
           docker buildx build --platform linux/amd64 -t zabang-be:latest . --load
-          docker save zabang-be:latest > zabang-be.tar
+          docker save zabang-be:latest | gzip > zabang-be.tar.gz
 
       - name: Copy files to server
         if: steps.has_dockerfile.outputs.present == 'true'
@@ -61,7 +61,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "zabang-be.tar,docker-compose.yml"
+          source: "zabang-be.tar.gz,docker-compose.yml"
           target: "/home/${{ secrets.SERVER_USER }}/zabang/"
 
       - name: Create .env file on server
@@ -91,16 +91,15 @@ jobs:
             set -e
             cd /home/${{ secrets.SERVER_USER }}/zabang
 
-            # 서버 아키 확인(amd64/arm64)
             echo "Server arch: $(uname -m)"
 
-            # 이미지 로드
-            docker load < zabang-be.tar
+            # 압축해제 후 이미지 로드
+            gunzip -c zabang-be.tar.gz | docker load
 
             # 기존 컨테이너 정리
             docker compose down --timeout 30 || true
 
-            # 새 컨테이너 시작
+            # 새 컨테이너 시작 (compose에 image: zabang-be:latest 명시되어 있어야 함)
             docker compose up -d
 
             # 헬스체크 (예: 7100 포트로 /actuator/health)
@@ -113,6 +112,5 @@ jobs:
               sleep 5
             done
 
-            # 상태 출력
             docker compose ps
             docker compose logs --tail=50
