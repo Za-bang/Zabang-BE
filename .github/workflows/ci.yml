@@ -1,5 +1,10 @@
 name: CI
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 on:
   push:
     branches: [main, develop]
@@ -9,105 +14,54 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 23
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: "17"
           distribution: "temurin"
+          cache: gradle  # ⬅️ 선택: setup-java 캐시 사용
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
 
       - name: Run tests
         run: ./gradlew test
 
-      - name: Generate test report
+      - name: Publish Test Report
+        if: always()
         uses: dorny/test-reporter@v1
-        if: success() || failure()
         with:
           name: Gradle Tests
-          path: build/test-results/test/*.xml
+          path: '**/build/test-results/test/TEST-*.xml'  
           reporter: java-junit
+          fail-on-empty: false                           
 
   build:
     runs-on: ubuntu-latest
     needs: test
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 23
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: "17"
           distribution: "temurin"
+          cache: gradle
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
 
       - name: Build with Gradle
         run: ./gradlew build -x test
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jar-artifact
-          path: build/libs/*.jar
-
-  # --------------------------------------------------------------------
-  # docker-build:
-  #   ▶ 서버/레지스트리/포트 등 배포 환경이 준비되면 주석 해제
-  #
-  # docker-build:
-  #   runs-on: ubuntu-latest
-  #   needs: build
-  #   if: github.ref == 'refs/heads/main'
-  #
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Download build artifacts
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         name: jar-artifact
-  #         path: build/libs/
-  #
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v3
-  #
-  #     - name: Build Docker image
-  #       run: |
-  #         docker buildx build --platform linux/amd64,linux/arm64 -t zabang-be:latest . --load
-  #
-  #     - name: Test Docker image
-  #       run: |
-  #         docker run --rm -d --name test-container -p /*포트번호*/ zabang-be:latest
-  #         sleep 10
-  #         docker stop test-container
+          path: '**/build/libs/*.jar'  
