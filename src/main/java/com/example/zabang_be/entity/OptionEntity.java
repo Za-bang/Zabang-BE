@@ -17,7 +17,7 @@ public class OptionEntity {
     private Long optionId;
 
     // roomId로 option을 조회하기 위해 외래키로 가져온다
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "roomid")    // 가져오는 외래키 컬럼
     private RoomEntity room;
 

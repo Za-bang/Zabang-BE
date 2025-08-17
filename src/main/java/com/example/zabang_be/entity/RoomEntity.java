@@ -47,6 +47,6 @@ public class RoomEntity {
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     List<KeywordEntity> keywords = new ArrayList<>();
     // 해당 방에 대한 옵션들을 리스트로 따로 저장
-    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    List<OptionEntity> options = new ArrayList<>();
+    @OneToOne(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    OptionEntity option;
 }
