@@ -38,14 +38,19 @@ public class RoomSearchResponseDto {
         // Entity에 값이 존재할때만 실행
         if(optionEntity != null) {
             // 해당 값이 존재한다면 List에 저장한다
-            if (optionEntity.isAircondtioner()) optionList.add("에어컨");
-            if (optionEntity.isRefridgerator()) optionList.add("냉장고");
+            if (optionEntity.isAirConditioner()) optionList.add("에어컨");
+            if (optionEntity.isRefrigerator()) optionList.add("냉장고");
             if (optionEntity.isWashingMachine()) optionList.add("세탁기");
             if (optionEntity.isDryer()) optionList.add("건조기");
             if (optionEntity.isBed()) optionList.add("침대");
             if (optionEntity.isPet()) optionList.add("애완동물 가능");
             if (optionEntity.isMicrowave()) optionList.add("전자레인지");
             if (optionEntity.isBalcony()) optionList.add("발코니");
+            if (optionEntity.isFireProtection()) optionList.add("소방시설");
+            if (optionEntity.isGas()) optionList.add("도시가스");
+            if (optionEntity.isWifi()) optionList.add("와이파이");
+            if (optionEntity.isCctv()) optionList.add("CCTV");
+            if (optionEntity.isParkingLot()) optionList.add("주차장");
         }
 
         // Dto를 만들어 반환

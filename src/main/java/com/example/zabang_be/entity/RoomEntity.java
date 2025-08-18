@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 public class RoomEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // roomID가 자동으로 증가할 수 있도록 AUTO_INTREMNET
@@ -46,7 +48,14 @@ public class RoomEntity {
     // 해당 방에 대한 키워드를 리스트로 따로 저장
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     List<KeywordEntity> keywords = new ArrayList<>();
-    // 해당 방에 대한 옵션들을 리스트로 따로 저장
+
     @OneToOne(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    OptionEntity option;
+    private OptionEntity option;
+
+    public void setOption(OptionEntity option) {
+        if (this.option != null) this.option.setRoom(null);
+        this.option = option;
+        if (option != null) option.setRoom(this);
+    }
+
 }
