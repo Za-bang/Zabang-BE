@@ -18,6 +18,7 @@ public class RoomController {
     private final SearchRoomService searchRoomService;
     private final RoomService roomService;
 
+
     // spring bean 등록
     public RoomController(SearchRoomService searchRoomService, RoomService roomService) {
         this.searchRoomService = searchRoomService;
