@@ -11,11 +11,11 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-public class RoomController {
+public class RoomSearchController {
     private final SearchRoomService searchRoomService;
 
     // spring bean 등록
-    public RoomController(SearchRoomService searchRoomService) {
+    public RoomSearchController(SearchRoomService searchRoomService) {
         this.searchRoomService = searchRoomService;
     }
 
