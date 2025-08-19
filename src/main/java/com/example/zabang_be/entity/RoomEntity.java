@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 public class RoomEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // roomID가 자동으로 증가할 수 있도록 AUTO_INTREMNET

@@ -4,12 +4,14 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "options")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 public class OptionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // optionId가 자동으로 증가 (AUTO_INCREMENT)
@@ -44,4 +46,19 @@ public class OptionEntity {
 
     @Column(name = "balcony")   // 발코니
     private boolean balcony;
+
+    @Column(name = "fireprotection")
+    private boolean fireProtection;
+
+    @Column(name = "gas")
+    private boolean gas;
+
+    @Column(name = "wifi")
+    private boolean wifi;
+
+    @Column(name = "cctv")
+    private boolean cctv;
+
+    @Column(name = "parkinglot")
+    private boolean parkingLot;
 }
