@@ -3,6 +3,8 @@ package com.example.zabang_be.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -15,6 +17,7 @@ uniqueConstraints = {
 })
 @NoArgsConstructor
 @Getter
+@Setter
 public class ReviewEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // reviewId가 자동으로 증가 (AUTO_INCREMENT)

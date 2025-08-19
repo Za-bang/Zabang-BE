@@ -124,7 +124,6 @@ public class RoomService {
         }
     }
 
-    /** 기본 파일명으로 호출하는 편의 메서드 */
     public List<RoomResponseDto> importFromDefaultJson() {
         return importFromJson("rooms.js");
     }
