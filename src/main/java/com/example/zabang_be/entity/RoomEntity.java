@@ -52,6 +52,10 @@ public class RoomEntity {
     @OneToOne(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private OptionEntity option;
 
+    // 해당 방에 대한 리뷰들을 리스트로 따로 저장
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ReviewEntity> reviews = new ArrayList<>();
+
     public void setOption(OptionEntity option) {
         if (this.option != null) this.option.setRoom(null);
         this.option = option;

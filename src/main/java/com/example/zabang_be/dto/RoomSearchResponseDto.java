@@ -2,6 +2,7 @@ package com.example.zabang_be.dto;
 
 import com.example.zabang_be.entity.KeywordEntity;
 import com.example.zabang_be.entity.OptionEntity;
+import com.example.zabang_be.entity.ReviewEntity;
 import com.example.zabang_be.entity.RoomEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,6 +26,7 @@ public class RoomSearchResponseDto {
     private String area;
     private List<String> keyword;
     private List<String> option;
+    private List<ReviewDto> review;
 
     public static RoomSearchResponseDto fromEntity(RoomEntity room) {
         List<String> keywordList = room.getKeywords()
@@ -53,6 +55,12 @@ public class RoomSearchResponseDto {
             if (optionEntity.isParkingLot()) optionList.add("주차장");
         }
 
+        // 리뷰 리스트로 변환
+        List<ReviewDto> reviewList = room.getReviews()
+                .stream()
+                .map(ReviewDto::fromEntity)
+                .collect(Collectors.toList());
+
         // Dto를 만들어 반환
         return new RoomSearchResponseDto(
                 room.getName(),
@@ -64,7 +72,8 @@ public class RoomSearchResponseDto {
                 room.getWide(),
                 room.getArea(),
                 keywordList,
-                optionList
+                optionList,
+                reviewList
         );
     }
 }

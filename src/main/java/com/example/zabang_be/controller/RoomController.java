@@ -1,9 +1,6 @@
 package com.example.zabang_be.controller;
 
-import com.example.zabang_be.dto.RoomCreateRequestDto;
-import com.example.zabang_be.dto.RoomResponseDto;
-import com.example.zabang_be.dto.RoomSearchRequestDto;
-import com.example.zabang_be.dto.RoomSearchResponseDto;
+import com.example.zabang_be.dto.*;
 import com.example.zabang_be.service.RoomService;
 import com.example.zabang_be.service.SearchRoomService;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -33,6 +30,19 @@ public class RoomController {
         if(result.isEmpty()) {
             // 검색 값이 존재하지 않는다면 message 출력
             return ResponseEntity.ok(Map.of("message", String.format("\"%s\"이란 방을 찾을 수 없습니다.", dto.getName())));
+        }
+        return ResponseEntity.ok(result);   // 검색 성공 값 있음 (200 Ok)
+    }
+
+    @PostMapping("/rooms/search/keywords")
+    public ResponseEntity<?> searchRoomsByKeywords(@RequestBody KeywordSearchRequestDto dto) {
+        // 입력받은 dto에서 키워드를 가져와 Room을 찾아서 List에 저장
+        List<RoomSearchResponseDto> result = searchRoomService.searchRoomByKeyword(dto.getKeywords());
+
+        // 만약 값이 존재하지 않는다면
+        if(result.isEmpty()) {
+            // 검색 값이 존재하지 않는다면 message 출력
+            return ResponseEntity.ok(Map.of("message", ("키워드에 해당하는 방을 찾을 수 없습니다.")));
         }
         return ResponseEntity.ok(result);   // 검색 성공 값 있음 (200 Ok)
     }
