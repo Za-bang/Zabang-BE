@@ -2,8 +2,8 @@ version: '3.8'
 
 services:
   app:
-    image: soonrimi-be:latest
-    container_name: sch-notification-be
+    image: zabang-be:latest
+    container_name: zabang-be
     ports:
       - "7100:7100"
     environment:
@@ -22,7 +22,7 @@ services:
 
   db:
     image: mysql:8.0
-    container_name: sch-notification-mysql
+    container_name: zabang-mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME}
