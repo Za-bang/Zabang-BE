@@ -1,9 +1,9 @@
-name: Deploy
+name: Production Deploy
 
 on:
   push:
     branches: [deploy]
-  workflow_dispatch:
+  workflow_dispatch: # 수동 실행 가능
 
 jobs:
   deploy:
@@ -23,7 +23,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Cache Gradle packages
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
@@ -35,73 +35,69 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build -x test
 
-      - name: Check Dockerfile presence
-        id: has_dockerfile
+      - name: Build Docker image
         run: |
-          if [ -f Dockerfile ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; fi
+          docker buildx create --use
+          docker buildx build --platform linux/arm64 -t zabang-be:latest . --load
+          docker save zabang-be:latest > zabang-be.tar
 
-      - name: Set up QEMU
-        if: steps.has_dockerfile.outputs.present == 'true'
-        uses: docker/setup-qemu-action@v3
+      - name: Copy files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }} # 비밀번호 대신 SSH 키 사용 권장
+          source: "zabang-be.tar,docker-compose.yml"
+          target: "/home/${{ secrets.SERVER_USER }}/zabang/"
 
-      - name: Set up Docker Buildx
-        if: steps.has_dockerfile.outputs.present == 'true'
-        uses: docker/setup-buildx-action@v3
+      - name: Create .env file on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /home/${{ secrets.SERVER_USER }}/zabang
+            cat > .env << EOF
+            DB_HOST=${{ secrets.DB_HOST }}
+            DB_PORT=${{ secrets.DB_PORT }}
+            DB_NAME=${{ secrets.DB_NAME }}
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            EOF
+            chmod 600 .env
 
-      - name: Build Docker image (amd64)
-        if: steps.has_dockerfile.outputs.present == 'true'
-        run: |
-          docker buildx build --platform linux/amd64 -t zabang-be:latest . --load
-          docker save zabang-be:latest | gzip > zabang-be.tar.gz
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /home/${{ secrets.SERVER_USER }}/zabang
 
-      # ---- 서버 관련 단계: 서버 준비될 때까지 전체 주석 ----
-      # - name: Copy files to server
-      #   if: steps.has_dockerfile.outputs.present == 'true'
-      #   uses: appleboy/scp-action@v0.1.7
-      #   with:
-      #     host: ${{ secrets.SERVER_HOST }}
-      #     username: ${{ secrets.SERVER_USER }}
-      #     key: ${{ secrets.SERVER_SSH_KEY }}
-      #     source: "zabang-be.tar.gz,docker-compose.yml"
-      #     target: "/home/${{ secrets.SERVER_USER }}/zabang/"
+            # Docker 이미지 로드
+            docker load < zabang-be.tar
 
-      # - name: Create .env file on server
-      #   uses: appleboy/ssh-action@v1.0.3
-      #   with:
-      #     host: ${{ secrets.SERVER_HOST }}
-      #     username: ${{ secrets.SERVER_USER }}
-      #     key: ${{ secrets.SERVER_SSH_KEY }}
-      #     script: |
-      #       cd /home/${{ secrets.SERVER_USER }}/zabang
-      #       cat > .env << 'EOF'
-      #       DB_HOST=${{ secrets.DB_HOST }}
-      #       DB_PORT=${{ secrets.DB_PORT }}
-      #       DB_NAME=${{ secrets.DB_NAME }}
-      #       DB_USERNAME=${{ secrets.DB_USERNAME }}
-      #       DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-      #       EOF
-      #       chmod 600 .env
+            # 기존 컨테이너 중지 및 제거 (Graceful shutdown)
+            docker compose down --timeout 30 || true
 
-      # - name: Deploy on server
-      #   uses: appleboy/ssh-action@v1.0.3
-      #   with:
-      #     host: ${{ secrets.SERVER_HOST }}
-      #     username: ${{ secrets.SERVER_USER }}
-      #     key: ${{ secrets.SERVER_SSH_KEY }}
-      #     script: |
-      #       set -e
-      #       cd /home/${{ secrets.SERVER_USER }}/zabang
-      #       echo "Server arch: $(uname -m)"
-      #       # gunzip -c zabang-be.tar.gz | docker load
-      #       # docker compose down --timeout 30 || true
-      #       # docker compose up -d
-      #       # echo "Waiting for application to start..."
-      #       # for i in {1..30}; do
-      #       #   if curl -fsS http://localhost:7100/actuator/health >/dev/null 2>&1; then
-      #       #     echo "Application is healthy!"
-      #       #     break
-      #       #   fi
-      #       #   sleep 5
-      #       # done
-      #       # docker compose ps
-      #       # docker compose logs --tail=50
+            # 새 컨테이너 시작
+            docker compose up -d
+
+            # 헬스체크 대기
+            echo "Waiting for application to start..."
+            for i in {1..30}; do
+              if curl -f http://localhost:7000/actuator/health 2>/dev/null; then
+                echo "Application is healthy!"
+                break
+              fi
+              sleep 10
+            done
+
+            # 사용하지 않는 이미지 정리
+            docker image prune -f
+
+            # 상태 확인
+            docker compose ps
+            docker compose logs --tail=50
