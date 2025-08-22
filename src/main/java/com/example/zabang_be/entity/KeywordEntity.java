@@ -3,7 +3,6 @@ package com.example.zabang_be.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
@@ -16,7 +15,6 @@ import lombok.Setter;
                 )
         })
 @NoArgsConstructor
-@Setter
 public class KeywordEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // keywordId가 자동으로 증가 (AUTO_INREMENT)

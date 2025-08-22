@@ -19,23 +19,23 @@ public class RoomSearchController {
         this.searchRoomService = searchRoomService;
     }
 
-    @GetMapping("/rooms/search")
-    public ResponseEntity<?> searchRoom(@RequestParam String name) {
+    @PostMapping("/rooms/search")
+    public ResponseEntity<?> searchRoom(@RequestBody RoomSearchRequestDto dto) {
         // 입력받은 dto에서 이름을 가져와 Room을 찾아서 List에 저장
-        List<RoomSearchResponseDto> result = searchRoomService.searchRoomByName(name);
+        List<RoomSearchResponseDto> result = searchRoomService.searchRoomByName(dto.getName());
 
         // 만약 값이 존재하지 않는다면
         if(result.isEmpty()) {
             // 검색 값이 존재하지 않는다면 message 출력
-            return ResponseEntity.ok(Map.of("message", String.format("\"%s\"이란 방을 찾을 수 없습니다.", name)));
+            return ResponseEntity.ok(Map.of("message", String.format("\"%s\"이란 방을 찾을 수 없습니다.", dto.getName())));
         }
         return ResponseEntity.ok(result);   // 검색 성공 값 있음 (200 Ok)
     }
 
-    @GetMapping("/rooms/search/keywords")
-    public ResponseEntity<?> searchRoomsByKeywords(@RequestParam List<String> keywords) {
+    @PostMapping("/rooms/search/keywords")
+    public ResponseEntity<?> searchRoomsByKeywords(@RequestBody KeywordSearchRequestDto dto) {
         // 입력받은 dto에서 키워드를 가져와 Room을 찾아서 List에 저장
-        List<RoomSearchResponseDto> result = searchRoomService.searchRoomByKeyword(keywords);
+        List<RoomSearchResponseDto> result = searchRoomService.searchRoomByKeyword(dto.getKeywords());
 
         // 만약 값이 존재하지 않는다면
         if(result.isEmpty()) {
