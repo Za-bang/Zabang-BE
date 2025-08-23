@@ -1,5 +1,6 @@
 package com.example.zabang_be.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,8 +28,9 @@ public class KeywordEntity {
     private String keyword;
     
     // roomId로 해당 방의 키워드를 조회하기 위해 roomEntity를 외래키로 가져온다
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "roomid")    // 가져오는 외래키
+    @JsonBackReference
     private RoomEntity room;
 
     public KeywordEntity(String keyword, RoomEntity room) {
