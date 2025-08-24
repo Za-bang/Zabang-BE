@@ -1,5 +1,6 @@
 package com.example.zabang_be.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -45,12 +46,20 @@ public class RoomEntity {
     @Column(name = "phonenumber", nullable = false) // 집주인 전화번호
     private String phoneNumber;
 
+    @Column(name = "latitude")
+    private double latitude;
+
+    @Column(name = "longitude")
+    private double longitude;
+
     // 해당 방에 대한 키워드를 리스트로 따로 저장
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    List<KeywordEntity> keywords = new ArrayList<>();
+    @JsonManagedReference
+    private List<KeywordEntity> keywords = new ArrayList<>();
+
     // 해당 방에 대한 옵션들을 리스트로 따로 저장
     @OneToOne(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    OptionEntity option;
+    private OptionEntity option;
 
     // 해당 방에 대한 리뷰들을 리스트로 따로 저장
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

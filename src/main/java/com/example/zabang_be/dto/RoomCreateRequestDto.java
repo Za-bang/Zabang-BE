@@ -11,5 +11,7 @@ public record RoomCreateRequestDto(
         @NotBlank String address,
         String area,
         @NotBlank String phoneNumber,
+        @NotNull double latitude,
+        @NotNull double longitude,
         OptionRequestDto options  // 옵션 여러 건
 ) {}
