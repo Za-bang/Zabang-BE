@@ -1,7 +1,7 @@
 package com.example.zabang_be.dto;
 
 public record RoomResponseDto(
-        Long roomId,
+        String roomId,
         String name,
         String imagePath,
         Long deposit,
