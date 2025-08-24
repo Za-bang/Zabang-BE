@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequestMapping("/api")
 public class RoomController {
     private final SearchRoomService searchRoomService;
     private final RoomService roomService;

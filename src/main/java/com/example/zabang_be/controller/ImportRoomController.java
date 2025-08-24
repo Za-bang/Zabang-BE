@@ -12,7 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/admin/import")
+@RequestMapping("api/admin/import")
 public class ImportRoomController {
     private final RoomService roomService;
 
