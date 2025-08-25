@@ -21,6 +21,10 @@ public class PostCreateRequestDto {
     @Size(max = 5000, message = "content max 5000")
     private String content;
 
+    @NotBlank(message = "status is required")
+    @Size (max = 5000, message = "content max 5000")
+    private String status;
+
     @NotBlank(message = "areaTag is required")  // "1구역" ~ "4구역"
     private String areaTag;
 

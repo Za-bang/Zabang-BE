@@ -12,6 +12,7 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      - OPEN_API_KEY=${OPEN_API_KEY} 
     env_file:
       - .env
     restart: unless-stopped
