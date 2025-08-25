@@ -99,8 +99,10 @@ public class PostController {
 
     @GetMapping("/fe/posts") //프론트 수정
     public List<FrontendPostDto> listForFrontend() {
-        // posts 전부 가져오기
-        var posts = postRepository.findAll();
+        // 삭제 안 된 글만 가져오기
+        var posts = postRepository
+                .findAllByDeletedAtIsNull(org.springframework.data.domain.Pageable.unpaged())
+                .getContent();
 
         return posts.stream().map(post -> {
             // 댓글 목록 가져오기
@@ -111,7 +113,7 @@ public class PostController {
                             .id("c" + c.getId())
                             .author(c.getNickname())
                             .text(c.getContent())
-                            .date(c.getCreatedAt().toLocalDate().toString()) // yyyy-MM-dd -> 필요하면 format 변경
+                            .date(c.getCreatedAt().format(FE_DATE_FMT))
                             .build())
                     .toList();
 
@@ -124,7 +126,7 @@ public class PostController {
                     .author(userRepository.findById(post.getUserId())
                             .map(u -> u.getNickName())
                             .orElse("익명"))
-                    .date(post.getCreatedAt().toLocalDate().toString())
+                    .date(post.getCreatedAt().format(FE_DATE_FMT))
                     .contents(post.getContent())
                     .image(postImageRepository.findUrlsByPostIdOrderByOrd(post.getId()).stream().findFirst().orElse(null))
                     .views(post.getViewCount())

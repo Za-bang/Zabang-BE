@@ -35,10 +35,6 @@ public class PostService {
     }
 
 
-
-    /** 글 생성: 저장 후 생성된 id 반환 */
-    // PostService.java
-
     @Transactional
     public Long create(PostCreateRequestDto req) {
         // 1) 기본 검증
@@ -47,6 +43,7 @@ public class PostService {
         if (req.getContent() == null || req.getContent().isBlank()) throw new IllegalArgumentException("content required");
         if (req.getAreaTag() == null || req.getAreaTag().isBlank()) throw new IllegalArgumentException("areaTag required");
         if (req.getCategory() == null || req.getCategory().isBlank()) throw new IllegalArgumentException("category required");
+        if(req.getStatus() == null || req.getStatus() == null) throw new IllegalArgumentException("status required");
 
         // 2) DTO → Entity
         PostEntity p = new PostEntity();
