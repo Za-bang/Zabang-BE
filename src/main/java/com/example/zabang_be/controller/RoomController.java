@@ -39,6 +39,19 @@ public class RoomController {
         return ResponseEntity.ok(result);   // 검색 성공 값 있음 (200 Ok)
     }
 
+    @GetMapping("/rooms/search/keyword")
+    public ResponseEntity<?> searchRoom(@RequestParam List<String> keywords) {
+        // name에 해당하는 Room을 찾아서 List에 저장
+        List<RoomSearchResponseDto> result = searchRoomService.searchRoomByKeyword(keywords);
+
+        // 만약 값이 존재하지 않는다면
+        if(result.isEmpty()) {
+            // 검색 값이 존재하지 않는다면 message 출력
+            return ResponseEntity.ok(Map.of("message", String.format("방을 찾을 수 없습니다.")));
+        }
+        return ResponseEntity.ok(result);   // 검색 성공 값 있음 (200 Ok)
+    }
+
 
     // 빌라 좌표를 통해 검색
     @GetMapping("/rooms/at")
