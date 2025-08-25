@@ -150,6 +150,7 @@ public class PostController {
         return postService.getDetail(id);
     }
 
+
 //    @PatchMapping("/posts/{id}")
 //    @ResponseStatus(HttpStatus.NO_CONTENT)
 //    public void update(@PathVariable Long id, @RequestBody PostCreateRequestDto req) {
