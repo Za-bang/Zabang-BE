@@ -30,7 +30,8 @@ public class ReviewService {
         RoomEntity room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new EntityNotFoundException("Room not found: " + roomId));
 
-        String author = "익명";
+        long num = reviewRepository.countByRoomAndAuthorStartingWith(room, "익명");
+        String author = "익명" + (num + 1);
 
         ReviewEntity review = new ReviewEntity();
         review.setRoom(room);
@@ -65,12 +66,18 @@ public class ReviewService {
         String[] keywords = keyword.split(",\\s*");
 
         // keywords 테이블에 저장
-        Arrays.stream(keywords).filter(key-> !key.isEmpty())
-                .forEach(key-> {
-                    KeywordEntity keywordEntity = new KeywordEntity();
-                    keywordEntity.setRoom(room);
-                    keywordEntity.setKeyword(key.trim());   // 앞뒤 공백 제거
-                    keywordRepository.save(keywordEntity);
+        Arrays.stream(keywords)
+                .filter(key -> !key.isEmpty())
+                .forEach(key -> {
+                    String trimmedKey = key.trim();
+                    
+                    // DB에 키워드가 존재하지 않을 경우에만 저장
+                    if (!keywordRepository.existsByRoomAndKeyword(room, trimmedKey)) {
+                        KeywordEntity keywordEntity = new KeywordEntity();
+                        keywordEntity.setRoom(room);
+                        keywordEntity.setKeyword(trimmedKey);
+                        keywordRepository.save(keywordEntity);
+                    }
                 });
     }
 }
