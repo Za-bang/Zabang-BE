@@ -22,13 +22,9 @@ public class ReviewController {
     )
     public ResponseEntity<ReviewDto> createReview(
             @PathVariable Long roomId,
-            @RequestHeader(name = "X-User-Id", required = false) Long userId,
             @Valid @ModelAttribute ReviewCreateRequestDto request
     ) {
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        ReviewDto result = reviewService.create(roomId, userId, request);
+        ReviewDto result = reviewService.create(roomId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 }

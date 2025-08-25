@@ -9,6 +9,7 @@ import lombok.Setter;
 import org.springframework.stereotype.*;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 
 
@@ -19,57 +20,44 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final RoomRepository roomRepository;
-    private final UserRepository userRepository;
     private final KeywordRepository keywordRepository;
     private final KeywordByAiService keyword;
     private final KeywordByAiService keywordByAiService;
 
-    @Transactional
-    public ReviewDto create(Long roomId, Long userId, ReviewCreateRequestDto req) {
 
+    @Transactional
+    public ReviewDto create(Long roomId, ReviewCreateRequestDto req) {
         RoomEntity room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new EntityNotFoundException("Room not found: " + roomId));
 
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
+        String author = "익명";
 
-        String author = resolveAuthor(user);
-        // 중복 리뷰 방지
-        if (reviewRepository.existsByRoom_RoomIdAndAuthor(roomId, author)) {
-            throw new IllegalStateException("Already reviewed this room");
-        }
-
-        // 세터 기반으로 엔티티 생성
         ReviewEntity review = new ReviewEntity();
         review.setRoom(room);
         review.setAuthor(author);
         review.setTexts(req.getContent());
         review.setGrade(req.getRating().doubleValue());
+        review.setDate(LocalDateTime.now()); // @PrePersist로 자동이면 제거하세요.
 
-        // 이미지 업로드 미구현 시: 우선 첫 파일명만 저장(임시)
-        String imagePath = null;
+        // 이미지 업로드 미구현: 우선 첫 파일명만 저장(임시)
         if (req.getImages() != null && !req.getImages().isEmpty()) {
-            imagePath = req.getImages().get(0).getOriginalFilename(); // 실제 업로드 구현 전 임시
+            review.setImagePath(req.getImages().get(0).getOriginalFilename());
         }
-        review.setImagePath(imagePath);
 
-        // createdAt/date 는 엔티티 @PrePersist 에서 자동 세팅된다고 가정
-        //ReviewEntity saved = reviewRepository.save(review);
-
-        // AI를 통해 키워드를 추출
+        // AI 키워드 추출 & 저장
         try {
-           PythonApiResponseDto api = keyword.getKeywordsFromAi(req.getContent());
-           if(api != null && api.getKeywords() != null) {
-               String getKeyword = api.getKeywords();
-               review.setKeyword(getKeyword);   // review 테이블에 키워드 문자열로 저장
-               saveKeyword(room, getKeyword);   // keywords 테이블에 키워드 각각 저장
-           }
+            PythonApiResponseDto api = keywordByAiService.getKeywordsFromAi(req.getContent());
+            if (api != null && api.getKeywords() != null) {
+                String keywords = api.getKeywords(); // "조용함, 채광, 역세권"
+                review.setKeyword(keywords);         // review 테이블에 문자열로 저장
+                saveKeyword(room, keywords);        // keywords 테이블에 분리 저장
+            }
         } catch (Exception e) {
             System.out.println("키워드 추출 실패: " + e.getMessage());
         }
-        ReviewEntity saved = reviewRepository.save(review);
 
-        return ReviewDto.fromEntity(saved);
+        ReviewEntity saved = reviewRepository.save(review);
+        return ReviewDto.fromEntity(saved); // ReviewDto에서 roomId를 String으로 채우는 로직 포함
     }
 
     private void saveKeyword(RoomEntity room, String keyword) {
@@ -84,24 +72,5 @@ public class ReviewService {
                     keywordEntity.setKeyword(key.trim());   // 앞뒤 공백 제거
                     keywordRepository.save(keywordEntity);
                 });
-    }
-
-    private String resolveAuthor(UserEntity user) {
-        try {
-            String nickname = user.getNickName();   // UserEntity에 nickname 필드 → getNickname()
-            if (nickname != null && !nickname.isBlank()) return nickname;
-        } catch (Exception ignore) {}
-
-        try {
-            String username = user.getUserName();   // UserEntity에 username 필드 → getUsername()
-            if (username != null && !username.isBlank()) return username;
-        } catch (Exception ignore) {}
-
-        // 필드 명 맞추기
-        return "user-" + user.getUserId();
-    }
-
-    private ReviewDto toDto(ReviewEntity e) {
-        return ReviewDto.fromEntity(e);
     }
 }

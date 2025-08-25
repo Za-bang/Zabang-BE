@@ -104,7 +104,7 @@ public class RoomService {
         }
 
         return new RoomResponseDto(
-                e.getRoomId(),
+                String.valueOf(e.getRoomId()), // roomid string으로 보내기
                 e.getName(),
                 e.getImagePath(),
                 e.getDeposit(),
