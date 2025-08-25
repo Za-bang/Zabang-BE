@@ -39,7 +39,7 @@ public class RoomController {
         return ResponseEntity.ok(result);   // 검색 성공 값 있음 (200 Ok)
     }
 
-    @GetMapping("/rooms/search/keyword")
+    @GetMapping("/rooms/search/name")
     public ResponseEntity<?> searchRoom(@RequestParam List<String> keywords) {
         // name에 해당하는 Room을 찾아서 List에 저장
         List<RoomSearchResponseDto> result = searchRoomService.searchRoomByKeyword(keywords);
