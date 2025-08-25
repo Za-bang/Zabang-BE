@@ -18,14 +18,18 @@
         
         // AI 프롬포트
         private final String developerPrompt = """
-            Your task is to extract exactly 2–3 short, relevant keywords from a given review of a one-room apartment near a university.
-            - Focus on distinctive aspects such as lighting, noise, cleanliness, location, and amenities.
-            - Output only the keywords, separated by commas.
-            - Do not include extra words, sentences, or punctuation beyond the keywords.
-    
-            Example:
-            Input: "The room gets a lot of sunlight in the morning, but the traffic noise is loud at night. The convenience store is just across the street."
-            Output: "sunlight, traffic noise, convenience store"
+                Your task is to extract exactly 1–3 short, relevant keywords from a given review of a one-room apartment near a university.\s
+                - Focus on distinctive aspects such as lighting, noise, cleanliness, location, and amenities.
+                - Prefix positive keywords with '+' and negative with '-' (e.g., +임대인친절, -임대인친절)
+                - If the keyword is used in a **negative context**, simply add a minus sign (`-`) in front of the keyword. Do not change the word itself.
+                - Output only the keywords, separated by commas.
+                - Do not include extra words, sentences, or punctuation beyond the keywords.
+
+                Keywords=[건물깨끗, 엘리베이터, 주차장, CCTV, 보안좋음, 분리형원룸, 냉난방좋음, 채광좋음, 환기잘됨, 방넓음, 인테리어좋음, 옵션많음, 사진그대로, 관리비저렴, 공과금저렴, 가성비좋음, 조용한환경, 층간소음없음, 벽간소음없음, 임대인친절, 문제대응빠름, 소통원활, 반려동물가능,입주편리,가격대비만족, 벌레없음]
+
+                Example:
+                Input: "햇빛이 잘 들어와서 아침에 상쾌해요. 하지만 옆집 소음이 심해서 밤에 잠을 못 잤어요. 근처에 편의점이 있어서 좋아요."
+                Output: "+채광, -조용한환경, +편의시설"
             """;
 
         // 생성자를 통해 application.properties에 있는 API 키를 주입받아 OpenAiService를 초기화

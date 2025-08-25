@@ -26,7 +26,7 @@ public class RoomController {
         this.roomService = roomService;
     }
 
-    @PostMapping("/rooms/search")
+    @GetMapping("/rooms/search")
     public ResponseEntity<?> searchRoom(@RequestParam String name) {
         // name에 해당하는 Room을 찾아서 List에 저장
         List<RoomSearchResponseDto> result = searchRoomService.searchRoomByName(name);
