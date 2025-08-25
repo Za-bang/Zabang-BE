@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -40,4 +41,19 @@ public class GlobalExceptionHandler {
     public Map<String, Object> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex) {
         return Map.of("message", "Invalid data: " + ex.getMostSpecificCause().getMessage());
     }
+
+
+    @ExceptionHandler(NoSuchElementException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST) // 또는 HttpStatus.NOT_FOUND
+    public Map<String,Object> handleNoSuch(NoSuchElementException ex) {
+        return Map.of("message", ex.getMessage());
+    }
+
+
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, Object> handleIllegalState(IllegalStateException ex) {
+        return Map.of("message", ex.getMessage());
+    }
+
 }
